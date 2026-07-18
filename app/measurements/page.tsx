@@ -136,7 +136,7 @@ export default function MeasurementsPage() {
     const { error: upsertError } = await supabase.from('body_profile').upsert({
       user_id: user.id,
       ...values,
-      notes: form.notes.trim() === '' ? null : form.notes,
+      notes: form.notes.trim() || null,
     })
 
     setSaving(false)
