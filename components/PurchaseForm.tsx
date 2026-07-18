@@ -61,12 +61,47 @@ export function PurchaseForm({ mode, purchaseId, initial }: Props) {
   const [msrpAmount, setMsrpAmount] = useState(initial?.msrp_amount != null ? String(initial.msrp_amount) : '')
   const [msrpCurrency, setMsrpCurrency] = useState(initial?.msrp_currency ?? currency.price_currency)
   const [photoUrl, setPhotoUrl] = useState(initial?.photo_url ?? '')
+  const [sourceUrl, setSourceUrl] = useState(initial?.source_url ?? '')
   const [notes, setNotes] = useState(initial?.notes ?? '')
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [lookingUp, setLookingUp] = useState(false)
+  const [lookupNote, setLookupNote] = useState<string | null>(null)
+  const [recommendation, setRecommendation] = useState<{ size: string; why: string | null } | null>(null)
+
   const showSize = SIZED_CATEGORIES.has(category ?? '')
+
+  async function handleLookup() {
+    setLookingUp(true)
+    setLookupNote(null)
+    try {
+      const r = await fetch('/api/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item_name: itemName, brand }),
+      })
+      const d = await r.json()
+
+      if (d.photo_url != null) setPhotoUrl(d.photo_url)
+      if (d.msrp?.amount != null) setMsrpAmount(String(d.msrp.amount))
+      if (d.msrp?.currency != null) setMsrpCurrency(d.msrp.currency)
+      if (d.source_url != null) setSourceUrl(d.source_url)
+
+      setRecommendation(
+        d.recommended_size ? { size: d.recommended_size, why: d.recommended_size_rationale ?? null } : null
+      )
+
+      if (!d.photo_url && !d.msrp && !d.size_chart) {
+        setLookupNote("Couldn't find details, enter manually")
+      }
+    } catch {
+      setLookupNote("Couldn't find details, enter manually")
+    } finally {
+      setLookingUp(false)
+    }
+  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -140,6 +175,7 @@ export function PurchaseForm({ mode, purchaseId, initial }: Props) {
       msrp_currency: msrpParsed != null ? msrpCurrency || currency.price_currency : null,
       savings_amount: savingsAmount,
       savings_currency: savingsCurrency,
+      source_url: sourceUrl.trim() || null,
       notes: notes.trim() || null,
     }
 
@@ -225,6 +261,25 @@ export function PurchaseForm({ mode, purchaseId, initial }: Props) {
                 placeholder="e.g. US 9"
                 className={inputClass}
               />
+              {recommendation && (
+                <div className="mt-2 rounded-[10px] border border-black/10 bg-background px-3 py-2.5 dark:border-white/10">
+                  <p className="text-[13px] text-foreground max-[640px]:text-[15px]">
+                    Recommended size: <span className="font-medium">{recommendation.size}</span>
+                  </p>
+                  {recommendation.why && (
+                    <p className="mt-0.5 text-[12px] text-foreground/60 max-[640px]:text-[14px]">
+                      {recommendation.why}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setSize(recommendation.size)}
+                    className="mt-1.5 text-[12px] font-medium text-accent underline-offset-2 hover:underline max-[640px]:text-[14px]"
+                  >
+                    Use this
+                  </button>
+                </div>
+              )}
             </label>
           )}
 
@@ -306,14 +361,33 @@ export function PurchaseForm({ mode, purchaseId, initial }: Props) {
 
             <button
               type="button"
-              disabled
-              aria-disabled="true"
-              title="Auto lookup arrives in the next update"
-              className="mb-[1px] shrink-0 rounded-[10px] border border-black/10 bg-background px-5 py-2.5 text-[13px] font-medium text-foreground/60 focus-visible:ring-2 focus-visible:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 max-[640px]:text-[15px]"
+              onClick={handleLookup}
+              disabled={!itemName.trim() || lookingUp}
+              title="Look up photo, MSRP and size from the web"
+              className="mb-[1px] flex shrink-0 items-center gap-2 rounded-[10px] border border-black/10 bg-background px-5 py-2.5 text-[13px] font-medium text-foreground/70 transition-colors hover:bg-surface focus-visible:ring-2 focus-visible:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 max-[640px]:text-[15px]"
             >
-              Look up
+              {lookingUp && (
+                <svg
+                  className="h-3.5 w-3.5 animate-spin text-foreground/50"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
+                </svg>
+              )}
+              {lookingUp ? 'Looking up...' : 'Look up'}
             </button>
           </div>
+
+          {lookupNote && (
+            <p className="-mt-2 text-[12px] text-warn max-[640px]:text-[14px]">{lookupNote}</p>
+          )}
 
           <label>
             <span className={labelClass}>Notes</span>
