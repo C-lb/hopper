@@ -28,6 +28,9 @@ Multi-user, so anyone can sign up and keep their own catalogue.
   implementation time.
 - **Web search:** Tavily (free tier) — LLM-oriented search that returns clean
   page content and supports domain ranking.
+- **Scrape fallback:** Oxylabs residential proxy (already available) for fetching
+  e-commerce pages (Amazon/eBay) that block plain requests. Used only when Tavily's
+  returned content is empty/blocked.
 - **FX:** Frankfurter (free, ECB-backed, historical dates, no key).
 - **Geocoding:** OpenStreetMap Nominatim (free) for place search + autocomplete →
   lat/lng.
@@ -153,9 +156,16 @@ Every external dependency can fail; none may block a save.
 - Sharing catalogues between users.
 - Native/iOS wrapper (web is responsive; Capacitor is a later option).
 
+## Resolved config
+
+- **ai&:** base URL `https://api.aiand.com/v1`, model `moonshotai/kimi-k2.7-code`,
+  OpenAI-compatible (verified). Key stored in gitignored `.env` (`AIAND_API_KEY`),
+  never committed. Alternate models available if we need to swap (GLM, Qwen,
+  DeepSeek, gpt-oss).
+- **Oxylabs:** residential proxy `pr.oxylabs.io:7777` with customer creds in
+  `.env`. Fallback fetch for blocked e-commerce pages.
+
 ## Open items to resolve at implementation time
 
-- ai& base URL, API key, model id, and whether it supports vision (affects any
-  future image work) — pull from Daytona HackSprint access notes.
-- Tavily API key (free tier signup).
-- Supabase project provisioning.
+- Tavily API key (free tier signup — the one remaining key to obtain).
+- Supabase project provisioning (create project, get URL + anon/service keys).
