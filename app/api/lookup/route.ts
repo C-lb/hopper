@@ -31,7 +31,10 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'item_name required' }, { status: 400 })
   }
-  if (!item_name) return NextResponse.json({ error: 'item_name required' }, { status: 400 })
+  if (!item_name || typeof item_name !== 'string') {
+    return NextResponse.json({ error: 'item_name required' }, { status: 400 })
+  }
+  if (brand != null && typeof brand !== 'string') brand = undefined
 
   const key = `${(brand ?? '').toLowerCase()}|${item_name.toLowerCase()}`.trim()
 
@@ -72,7 +75,7 @@ export async function POST(req: NextRequest) {
       try {
         await supabase
           .from('item_lookup_cache')
-          .upsert({ query_key: key, result_json: base, fetched_at: new Date().toISOString() })
+          .upsert({ query_key: key, result_json: base, fetched_at: new Date().toISOString() }, { onConflict: 'query_key' })
       } catch {
         // cache write failure shouldn't fail the lookup
       }
