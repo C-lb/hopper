@@ -2,7 +2,7 @@ import OpenAI from 'openai'
 import type { BodyProfile } from '@/lib/types'
 import { safeExtract, RecommendationSchema, type ExtractionResult } from './schema'
 
-const MODEL = process.env.AIAND_MODEL || 'moonshotai/kimi-k2.7-code'
+const MODEL = process.env.AIAND_MODEL || 'openai/gpt-oss-120b'
 
 // Lazy-init: constructing OpenAI() eagerly at module load throws when
 // AIAND_API_KEY is unset, which would break importing parseJsonLoose
