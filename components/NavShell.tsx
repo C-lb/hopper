@@ -50,6 +50,18 @@ function IconChart(props: IconProps) {
   )
 }
 
+function IconRuler(props: IconProps) {
+  return (
+    <svg {...iconProps(props)}>
+      <path d="M3.7 14.6 14.6 3.7a1.5 1.5 0 0 1 2.1 0l3.6 3.6a1.5 1.5 0 0 1 0 2.1L9.4 20.3a1.5 1.5 0 0 1-2.1 0l-3.6-3.6a1.5 1.5 0 0 1 0-2.1Z" />
+      <path d="M8 8.5 9.5 10" />
+      <path d="M11 5.5 12.5 7" />
+      <path d="M14 11.5 15.5 13" />
+      <path d="M5 11.5 6.5 13" />
+    </svg>
+  )
+}
+
 function IconGear(props: IconProps) {
   return (
     <svg {...iconProps(props)}>
@@ -73,6 +85,7 @@ const NAV_ITEMS = [
   { href: '/catalogue', label: 'Catalogue', Icon: IconGrid },
   { href: '/map', label: 'Map', Icon: IconMap },
   { href: '/dashboard', label: 'Dashboard', Icon: IconChart },
+  { href: '/measurements', label: 'Measurements', Icon: IconRuler },
   { href: '/about', label: 'About', Icon: IconGear },
 ]
 

@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { createBrowserSupabase } from '@/lib/supabase/client'
 import { LocationField } from '@/components/LocationField'
 import { CURRENCIES } from '@/lib/currencies'
-import type { BodyProfile, UserSettings } from '@/lib/types'
+import type { UserSettings } from '@/lib/types'
 
 const inputClass =
   'w-full rounded-[10px] border border-black/10 bg-background px-4 py-2.5 text-[13px] text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 max-[640px]:text-[17px]'
@@ -26,33 +26,6 @@ function deviceTimezone(): string {
   } catch {
     return 'UTC'
   }
-}
-
-type NumberField = Exclude<keyof BodyProfile, 'user_id' | 'notes' | 'updated_at'>
-
-const NUMBER_FIELDS: { key: NumberField; label: string; unit: string }[] = [
-  { key: 'height_cm', label: 'Height', unit: 'cm' },
-  { key: 'weight_kg', label: 'Weight', unit: 'kg' },
-  { key: 'chest_cm', label: 'Chest', unit: 'cm' },
-  { key: 'waist_cm', label: 'Waist', unit: 'cm' },
-  { key: 'hips_cm', label: 'Hips', unit: 'cm' },
-  { key: 'inseam_cm', label: 'Inseam', unit: 'cm' },
-  { key: 'shoulder_cm', label: 'Shoulder', unit: 'cm' },
-  { key: 'foot_length_cm', label: 'Foot length', unit: 'cm' },
-]
-
-type MeasurementForm = Record<NumberField, string> & { notes: string }
-
-const EMPTY_MEASUREMENTS: MeasurementForm = {
-  height_cm: '',
-  weight_kg: '',
-  chest_cm: '',
-  waist_cm: '',
-  hips_cm: '',
-  inseam_cm: '',
-  shoulder_cm: '',
-  foot_length_cm: '',
-  notes: '',
 }
 
 function Toggle({
@@ -126,12 +99,6 @@ export default function AboutPage() {
   const [defaultsError, setDefaultsError] = useState<string | null>(null)
   const [defaultsSaved, setDefaultsSaved] = useState(false)
 
-  // Body measurements
-  const [measurements, setMeasurements] = useState<MeasurementForm>(EMPTY_MEASUREMENTS)
-  const [measurementsSaving, setMeasurementsSaving] = useState(false)
-  const [measurementsError, setMeasurementsError] = useState<string | null>(null)
-  const [measurementsSaved, setMeasurementsSaved] = useState(false)
-
   useEffect(() => {
     let cancelled = false
 
@@ -156,10 +123,11 @@ export default function AboutPage() {
       setEmail(user.email ?? '')
       setNewEmail(user.email ?? '')
 
-      const [{ data: settingsData }, { data: profileData }] = await Promise.all([
-        supabase.from('user_settings').select('*').eq('user_id', user.id).maybeSingle(),
-        supabase.from('body_profile').select('*').eq('user_id', user.id).maybeSingle(),
-      ])
+      const { data: settingsData } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle()
 
       if (cancelled) return
 
@@ -174,21 +142,6 @@ export default function AboutPage() {
         setAutoUseTimezone(settings.auto_use_timezone ?? true)
         setDefaultCurrency(settings.default_currency ?? CURRENCIES[0]?.code ?? 'SGD')
         setDisplayDefaultCurrency(settings.display_default_currency ?? false)
-      }
-
-      if (profileData) {
-        const profile = profileData as BodyProfile
-        setMeasurements({
-          height_cm: profile.height_cm?.toString() ?? '',
-          weight_kg: profile.weight_kg?.toString() ?? '',
-          chest_cm: profile.chest_cm?.toString() ?? '',
-          waist_cm: profile.waist_cm?.toString() ?? '',
-          hips_cm: profile.hips_cm?.toString() ?? '',
-          inseam_cm: profile.inseam_cm?.toString() ?? '',
-          shoulder_cm: profile.shoulder_cm?.toString() ?? '',
-          foot_length_cm: profile.foot_length_cm?.toString() ?? '',
-          notes: profile.notes ?? '',
-        })
       }
 
       setLoading(false)
@@ -269,50 +222,6 @@ export default function AboutPage() {
     }
 
     setDefaultsSaved(true)
-  }
-
-  function handleMeasurementChange(key: NumberField) {
-    return (e: ChangeEvent<HTMLInputElement>) => {
-      setMeasurementsSaved(false)
-      setMeasurements((prev) => ({ ...prev, [key]: e.target.value }))
-    }
-  }
-
-  function handleNotesChange(e: ChangeEvent<HTMLTextAreaElement>) {
-    setMeasurementsSaved(false)
-    setMeasurements((prev) => ({ ...prev, notes: e.target.value }))
-  }
-
-  async function handleMeasurementsSave() {
-    if (!userId) return
-
-    setMeasurementsSaving(true)
-    setMeasurementsError(null)
-    setMeasurementsSaved(false)
-
-    const values = Object.fromEntries(
-      NUMBER_FIELDS.map(({ key }) => {
-        const raw = measurements[key].trim()
-        const parsed = raw === '' ? null : Number(raw)
-        return [key, parsed === null || Number.isNaN(parsed) ? null : parsed]
-      })
-    )
-
-    const supabase = createBrowserSupabase()
-    const { error } = await supabase.from('body_profile').upsert({
-      user_id: userId,
-      ...values,
-      notes: measurements.notes.trim() || null,
-    })
-
-    setMeasurementsSaving(false)
-
-    if (error) {
-      setMeasurementsError(error.message)
-      return
-    }
-
-    setMeasurementsSaved(true)
   }
 
   return (
@@ -464,59 +373,6 @@ export default function AboutPage() {
               className="hoppable hoppable-strong mt-6 rounded-[10px] px-6 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
             >
               {defaultsSaving ? 'Saving...' : 'Save defaults'}
-            </button>
-          </Section>
-
-          <Section title="Body measurements">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {NUMBER_FIELDS.map(({ key, label, unit }) => (
-                <label key={key} className="flex flex-col gap-1.5">
-                  <span className="text-sm text-foreground/80">
-                    {label} <span className="text-foreground/50">({unit})</span>
-                  </span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    step="0.1"
-                    min={0}
-                    value={measurements[key]}
-                    onChange={handleMeasurementChange(key)}
-                    placeholder="Not set"
-                    className={inputClass}
-                  />
-                </label>
-              ))}
-            </div>
-
-            <label className="mt-4 flex flex-col gap-1.5">
-              <span className="text-sm text-foreground/80">Notes</span>
-              <textarea
-                value={measurements.notes}
-                onChange={handleNotesChange}
-                rows={3}
-                placeholder="Anything else worth noting (fit preferences, brand quirks, etc.)"
-                className={`resize-none ${inputClass}`}
-              />
-            </label>
-
-            {measurementsError && (
-              <p role="alert" className="mt-4 text-sm text-danger">
-                {measurementsError}
-              </p>
-            )}
-            {measurementsSaved && !measurementsError && (
-              <p role="status" className="mt-4 text-sm text-success">
-                Saved.
-              </p>
-            )}
-
-            <button
-              type="button"
-              onClick={handleMeasurementsSave}
-              disabled={measurementsSaving}
-              className="hoppable hoppable-strong mt-6 rounded-[10px] px-6 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {measurementsSaving ? 'Saving...' : 'Save measurements'}
             </button>
           </Section>
         </div>

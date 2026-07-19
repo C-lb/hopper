@@ -5,6 +5,7 @@ export interface BodyProfile {
   height_cm: number | null; weight_kg: number | null
   chest_cm: number | null; waist_cm: number | null; hips_cm: number | null
   inseam_cm: number | null; shoulder_cm: number | null; foot_length_cm: number | null
+  extended: Record<string, unknown> | null
   notes: string | null; updated_at: string
 }
 
