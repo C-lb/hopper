@@ -139,10 +139,10 @@ export function PurchaseCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="min-w-0 truncate text-[15px] leading-tight max-[640px]:text-[16px]">{title}</span>
           {brand && (
             <span className="truncate text-[12px] text-foreground/55 max-[640px]:text-[13px]">{brand}</span>
           )}
+          <span className="min-w-0 truncate text-[15px] leading-tight max-[640px]:text-[16px]">{title}</span>
         </div>
         <Link
           href={`/purchases/${id}`}
@@ -168,9 +168,9 @@ export function PurchaseCard({
 
         {retail != null && (
           <div className="text-[12px] text-foreground/60 max-[640px]:text-[13px]">
-            Retail <span className={`font-medium ${retailColor}`}>{formatMoney(retail, price_currency)}</span>
+            <span className={`font-medium ${retailColor}`}>{formatMoney(retail, price_currency)}</span>
             {shipping_fee != null && (
-              <span className="text-foreground/50"> (+ {formatMoney(shipping_fee, price_currency)})</span>
+              <span className="text-foreground/50"> (+ {round2(shipping_fee).toFixed(2)})</span>
             )}
             {canConvert && retailPlusShipping != null && (
               <span className="text-foreground/45">
