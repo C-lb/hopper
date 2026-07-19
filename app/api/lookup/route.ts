@@ -12,7 +12,7 @@ import { createServerSupabase } from '@/lib/supabase/server'
 import { tavilySearch } from '@/lib/enrichment/tavily'
 import { rankResults } from '@/lib/enrichment/ranking'
 import { getPageContent } from '@/lib/enrichment/fetchPage'
-import { extract, recommendSize } from '@/lib/enrichment/aiand'
+import { extract, recommendSize, estimateShipping } from '@/lib/enrichment/aiand'
 import type { ExtractionResult } from '@/lib/enrichment/schema'
 
 export async function POST(req: NextRequest) {
@@ -24,10 +24,12 @@ export async function POST(req: NextRequest) {
 
   let item_name: string | undefined
   let brand: string | undefined
+  let price_currency: string | undefined
   try {
     const body = await req.json()
     item_name = body?.item_name
     brand = body?.brand
+    price_currency = typeof body?.price_currency === 'string' ? body.price_currency : undefined
   } catch {
     return NextResponse.json({ error: 'item_name required' }, { status: 400 })
   }
@@ -35,6 +37,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'item_name required' }, { status: 400 })
   }
   if (brand != null && typeof brand !== 'string') brand = undefined
+  const shippingCurrency = price_currency ?? 'SGD'
 
   const key = `${(brand ?? '').toLowerCase()}|${item_name.toLowerCase()}`.trim()
 
@@ -112,5 +115,22 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ...result, recommended_size, recommended_size_rationale })
+  // Estimate shipping to the user's default location (if any), in the purchase
+  // currency. ai& degrades to null internally, so this never throws a 500.
+  let shipping_fee: number | null = null
+  try {
+    const { data: settings } = await supabase
+      .from('user_settings')
+      .select('default_location_name')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    const loc = settings?.default_location_name
+    if (loc && typeof loc === 'string') {
+      shipping_fee = await estimateShipping(item_name, brand ?? null, loc, shippingCurrency)
+    }
+  } catch {
+    shipping_fee = null
+  }
+
+  return NextResponse.json({ ...result, recommended_size, recommended_size_rationale, shipping_fee })
 }

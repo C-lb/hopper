@@ -72,9 +72,6 @@ export default function MapPage() {
     <div className="flex h-full min-h-[calc(100vh-4rem)] flex-col lg:min-h-screen">
       <div className="px-4 pb-4 pt-8 lg:px-8 lg:pt-10">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Map</h1>
-        <p className="mt-1.5 text-[13px] text-foreground/60 max-[640px]:text-[14px]">
-          Where you have been shopping. Nearby purchases group into one pin.
-        </p>
       </div>
 
       {loading && (
@@ -95,7 +92,7 @@ export default function MapPage() {
           </p>
           <Link
             href="/purchases/new"
-            className="mt-1 rounded-[10px] bg-accent px-5 py-2.5 text-[13px] font-medium text-accent-foreground transition-opacity hover:opacity-90 active:opacity-80"
+            className="hoppable hoppable-strong mt-1 rounded-[10px] px-5 py-2.5 text-[13px] font-medium"
           >
             Add a purchase
           </Link>

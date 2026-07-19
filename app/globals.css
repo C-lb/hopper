@@ -1,14 +1,26 @@
 @import "tailwindcss";
 
+/* Force the dark monochrome scheme regardless of OS preference: the `dark`
+   class lives on <html>, and every `dark:` utility keys off it. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --accent: #6d28d9;
-  --accent-foreground: #ffffff;
-  --surface: #f4f4f5;
-  --danger: #dc2626;
-  --warn: #b45309;
-  --success: #16a34a;
+  /* Monochrome, no accent colour. The canvas is pure black; surfaces are
+     dark greys, clearly lighter than the canvas (dark-mode hierarchy). */
+  --background: #000000;
+  --foreground: #f4f4f5;
+  --surface: #141414;
+  --surface-2: #1e1e1e;
+
+  /* The "accent" is the white-invert interaction, not a hue. Repointed to
+     white/black so any lingering bg-accent / ring-accent stays monochrome. */
+  --accent: #ffffff;
+  --accent-foreground: #000000;
+
+  /* Semantic colours kept but muted; used only to carry meaning. */
+  --danger: #f0a1a1;
+  --warn: #e2b877;
+  --success: #86c99a;
 }
 
 @theme inline {
@@ -17,6 +29,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-danger: var(--danger);
   --color-warn: var(--warn);
   --color-success: var(--success);
@@ -24,20 +37,132 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --accent: #8b5cf6;
-    --surface: #18181b;
-    --danger: #f87171;
-    --warn: #fbbf24;
-    --success: #4ade80;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ---------------------------------------------------------------------------
+   .hoppable — the one interaction in this design.
+   Default: a subtle dark surface with light text. On hover / focus it inverts
+   to white-on-black and hops up a few pixels with a soft shadow. Reverts fully
+   on leave. Reduced-motion users get the invert but no translate.
+   Only buttons, nav items, links, toggles, and clickable cards get this.
+   Text inputs / selects / textareas do NOT — they keep a focus ring.
+   Radius and padding come from the element's own utility classes.
+--------------------------------------------------------------------------- */
+.hoppable {
+  background-color: var(--surface);
+  color: var(--foreground);
+  transition:
+    background-color 170ms ease,
+    color 170ms ease,
+    transform 170ms ease,
+    box-shadow 170ms ease;
+}
+
+/* Slightly more prominent variant for a single primary action per view. */
+.hoppable-strong {
+  background-color: var(--surface-2);
+}
+
+.hoppable:hover,
+.hoppable:focus-visible {
+  background-color: #ffffff;
+  color: #000000;
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px -12px rgba(0, 0, 0, 0.75);
+  outline: none;
+}
+
+.hoppable:active {
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hoppable {
+    transition:
+      background-color 170ms ease,
+      color 170ms ease,
+      box-shadow 170ms ease;
+  }
+  .hoppable:hover,
+  .hoppable:focus-visible,
+  .hoppable:active {
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Catalogue hero — the "HOPPER" wordmark with a rabbit hopping across it.
+   Pure transform animation, GPU-friendly. Parked under reduced-motion.
+--------------------------------------------------------------------------- */
+.hopper-stage {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-end;
+}
+
+.hopper-word {
+  display: inline-flex;
+  gap: 0.14em;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  font-size: clamp(2.75rem, 9vw, 5rem);
+  color: var(--foreground);
+}
+
+.hopper-letter {
+  display: inline-block;
+  transform-origin: 50% 100%;
+  animation: hopper-letter-bob 2.6s ease-in-out infinite;
+}
+.hopper-letter:nth-child(1) { animation-delay: 0s; }
+.hopper-letter:nth-child(2) { animation-delay: 0.12s; }
+.hopper-letter:nth-child(3) { animation-delay: 0.24s; }
+.hopper-letter:nth-child(4) { animation-delay: 0.36s; }
+.hopper-letter:nth-child(5) { animation-delay: 0.48s; }
+.hopper-letter:nth-child(6) { animation-delay: 0.60s; }
+
+/* The rabbit rides above the letters and crosses left-to-right, hopping. */
+.hopper-runner {
+  position: absolute;
+  left: 0;
+  top: -0.35em;
+  color: #ffffff;
+  animation: hopper-cross 5.2s ease-in-out infinite;
+  will-change: transform;
+  pointer-events: none;
+}
+.hopper-bouncer {
+  display: block;
+  animation: hopper-bounce 0.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes hopper-letter-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(-2deg); }
+}
+
+@keyframes hopper-cross {
+  0%, 100% { transform: translateX(0) scaleX(1); }
+  45% { transform: translateX(var(--cross, 240px)) scaleX(1); }
+  50% { transform: translateX(var(--cross, 240px)) scaleX(-1); }
+  95% { transform: translateX(0) scaleX(-1); }
+}
+
+@keyframes hopper-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-16px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hopper-letter,
+  .hopper-runner,
+  .hopper-bouncer {
+    animation: none;
+  }
 }

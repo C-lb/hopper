@@ -50,11 +50,11 @@ function IconChart(props: IconProps) {
   )
 }
 
-function IconRuler(props: IconProps) {
+function IconGear(props: IconProps) {
   return (
     <svg {...iconProps(props)}>
-      <rect x="3" y="7" width="18" height="10" rx="1.5" transform="rotate(-2 12 12)" />
-      <path d="M7.5 7.5v3M11.5 7v3.5M15.5 7.5v3" />
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   )
 }
@@ -73,7 +73,7 @@ const NAV_ITEMS = [
   { href: '/catalogue', label: 'Catalogue', Icon: IconGrid },
   { href: '/map', label: 'Map', Icon: IconMap },
   { href: '/dashboard', label: 'Dashboard', Icon: IconChart },
-  { href: '/measurements', label: 'Measurements', Icon: IconRuler },
+  { href: '/about', label: 'About', Icon: IconGear },
 ]
 
 export function NavShell({ children }: { children: ReactNode }) {
@@ -91,7 +91,7 @@ export function NavShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-full flex-col lg:flex-row">
-      <aside className="hidden shrink-0 flex-col justify-between border-r border-black/5 bg-surface px-4 py-6 lg:flex lg:w-60 dark:border-white/5">
+      <aside className="hidden shrink-0 flex-col justify-between border-r border-white/5 bg-background px-4 py-6 lg:flex lg:w-60">
         <div>
           <div className="flex items-center gap-2.5 px-2 pb-8 text-foreground">
             <Logo size={28} />
@@ -105,10 +105,8 @@ export function NavShell({ children }: { children: ReactNode }) {
                   key={href}
                   href={href}
                   aria-current={active ? 'page' : undefined}
-                  className={`flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-colors ${
-                    active
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-foreground/70 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5'
+                  className={`flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm ${
+                    active ? 'bg-white text-black' : 'hoppable'
                   }`}
                 >
                   <Icon className="h-[1.1em] w-[1.1em] shrink-0" />
@@ -121,7 +119,7 @@ export function NavShell({ children }: { children: ReactNode }) {
         <button
           type="button"
           onClick={handleSignOut}
-          className="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-left text-sm text-foreground/70 transition-colors hover:bg-black/5 hover:text-danger active:opacity-70 dark:hover:bg-white/5"
+          className="hoppable flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-left text-sm"
         >
           <IconLogOut className="h-[1.1em] w-[1.1em] shrink-0" />
           Sign out
@@ -138,7 +136,7 @@ export function NavShell({ children }: { children: ReactNode }) {
       </div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-10 flex items-stretch justify-around border-t border-black/5 bg-surface px-1 py-1.5 shadow-[0_-8px_24px_-16px_rgba(0,0,0,.3)] lg:hidden dark:border-white/5"
+        className="fixed inset-x-0 bottom-0 z-10 flex items-stretch justify-around gap-1 border-t border-white/5 bg-background px-2 py-2 shadow-[0_-8px_24px_-16px_rgba(0,0,0,.6)] lg:hidden"
         aria-label="Primary"
       >
         {NAV_ITEMS.map(({ href, label, Icon }) => {
@@ -148,8 +146,8 @@ export function NavShell({ children }: { children: ReactNode }) {
               key={href}
               href={href}
               aria-current={active ? 'page' : undefined}
-              className={`flex flex-1 flex-col items-center gap-1 rounded-[10px] px-2 py-1.5 text-[11px] transition-colors ${
-                active ? 'text-accent' : 'text-foreground/60'
+              className={`flex flex-1 flex-col items-center gap-1 rounded-[10px] px-2 py-1.5 text-[11px] ${
+                active ? 'bg-white text-black' : 'hoppable'
               }`}
             >
               <Icon className="h-5 w-5" />
@@ -160,7 +158,7 @@ export function NavShell({ children }: { children: ReactNode }) {
         <button
           type="button"
           onClick={handleSignOut}
-          className="flex flex-1 flex-col items-center gap-1 rounded-[10px] px-2 py-1.5 text-[11px] text-foreground/60 transition-colors active:opacity-70"
+          className="hoppable flex flex-1 flex-col items-center gap-1 rounded-[10px] px-2 py-1.5 text-[11px]"
         >
           <IconLogOut className="h-5 w-5" />
           Sign out

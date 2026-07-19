@@ -44,6 +44,28 @@ export async function extract(pageContent: string, sourceUrl: string): Promise<E
   } catch { return null }
 }
 
+export async function estimateShipping(
+  itemName: string,
+  brand: string | null,
+  toLocation: string,
+  currency: string
+): Promise<number | null> {
+  const sys =
+    'You estimate a rough shipping cost for delivering one item to a location. ' +
+    'Reply ONLY with JSON: { "shipping_fee": number|null } where shipping_fee is a plain ' +
+    `number in ${currency} (no symbol), or null if you cannot estimate. No prose.`
+  const user =
+    `ITEM: ${brand ? brand + ' ' : ''}${itemName}\n` +
+    `SHIP TO: ${toLocation}\nCURRENCY: ${currency}`
+  try {
+    const out = parseJsonLoose(await ask(sys, user)) as { shipping_fee?: unknown } | null
+    const fee = out?.shipping_fee
+    return typeof fee === 'number' && Number.isFinite(fee) ? fee : null
+  } catch {
+    return null
+  }
+}
+
 export async function recommendSize(sizeChart: string, profile: BodyProfile) {
   const sys = 'You recommend a clothing size. Given a size chart and body measurements (cm/kg), ' +
     'reply ONLY with JSON: { "recommended_size": string, "rationale": string (one sentence) }.'

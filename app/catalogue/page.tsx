@@ -4,9 +4,19 @@ import { useEffect, useMemo, useState, type SVGProps } from 'react'
 import Link from 'next/link'
 import { createBrowserSupabase } from '@/lib/supabase/client'
 import { PurchaseCard } from '@/components/PurchaseCard'
-import type { Purchase, Condition } from '@/lib/types'
+import { Logo } from '@/components/Logo'
+import type { Purchase, Condition, UserSettings } from '@/lib/types'
 
-const CONDITIONS: Condition[] = ['new', 'like-new', 'used', 'refurbished']
+const CONDITIONS: Condition[] = ['new', 'defective', 'refurbished', 'A', 'B', 'C', 'D']
+const CONDITION_LABEL: Record<Condition, string> = {
+  new: 'New',
+  defective: 'Defective',
+  refurbished: 'Refurbished',
+  A: 'Grade A',
+  B: 'Grade B',
+  C: 'Grade C',
+  D: 'Grade D',
+}
 
 type IconProps = SVGProps<SVGSVGElement>
 
@@ -60,6 +70,7 @@ function CardSkeleton() {
 
 export default function CataloguePage() {
   const [purchases, setPurchases] = useState<Purchase[]>([])
+  const [settings, setSettings] = useState<UserSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -91,11 +102,14 @@ export default function CataloguePage() {
         return
       }
 
-      const { data, error: fetchError } = await supabase
-        .from('purchases')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('purchased_at', { ascending: false })
+      const [{ data, error: fetchError }, { data: settingsData }] = await Promise.all([
+        supabase
+          .from('purchases')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('purchased_at', { ascending: false }),
+        supabase.from('user_settings').select('*').eq('user_id', user.id).maybeSingle(),
+      ])
 
       if (cancelled) return
 
@@ -106,6 +120,7 @@ export default function CataloguePage() {
       }
 
       setPurchases((data ?? []) as Purchase[])
+      setSettings((settingsData ?? null) as UserSettings | null)
       setLoading(false)
     }
 
@@ -149,18 +164,40 @@ export default function CataloguePage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 lg:px-8 lg:py-10">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Catalogue</h1>
-          <p className="mt-1.5 text-[13px] text-foreground/60 max-[640px]:text-[14px]">
-            Everything you have logged, newest first.
-          </p>
-        </div>
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
+        <h1 className="hopper-stage" aria-label="Hopper">
+          <span className="hopper-runner" aria-hidden style={{ ['--cross' as string]: '260px' }}>
+            <span className="hopper-bouncer">
+              <Logo size={44} />
+            </span>
+          </span>
+          <span className="hopper-word" aria-hidden>
+            <span className="hopper-letter">H</span>
+            <span className="hopper-letter">O</span>
+            <span className="hopper-letter">P</span>
+            <span className="hopper-letter">P</span>
+            <span className="hopper-letter">E</span>
+            <span className="hopper-letter">R</span>
+          </span>
+        </h1>
         <Link
           href="/purchases/new"
-          className="rounded-[10px] bg-accent px-5 py-2.5 text-[13px] font-medium text-accent-foreground transition-opacity hover:opacity-90 active:opacity-80 max-[640px]:text-[15px]"
+          title="Add a purchase"
+          aria-label="Add a purchase"
+          className="hoppable hoppable-strong flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] focus-visible:outline-none"
         >
-          Add a purchase
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.25}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-7 w-7"
+            aria-hidden
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
         </Link>
       </div>
 
@@ -186,7 +223,7 @@ export default function CataloguePage() {
               <option value="">All conditions</option>
               {CONDITIONS.map(c => (
                 <option key={c} value={c}>
-                  {c}
+                  {CONDITION_LABEL[c]}
                 </option>
               ))}
             </select>
@@ -216,15 +253,13 @@ export default function CataloguePage() {
               onChange={e => setDateTo(e.target.value)}
               className={`${inputClass} w-auto`}
             />
-            <div className="flex items-center gap-1 rounded-[10px] bg-surface p-1">
+            <div className="flex items-center gap-1.5 rounded-[10px] bg-surface p-1">
               <button
                 type="button"
                 aria-label="Grid view"
                 aria-pressed={view === 'grid'}
                 onClick={() => setView('grid')}
-                className={`rounded-[8px] p-2 transition-colors ${
-                  view === 'grid' ? 'bg-accent text-accent-foreground' : 'text-foreground/60 hover:text-foreground'
-                }`}
+                className={`rounded-[8px] p-2 ${view === 'grid' ? 'bg-white text-black' : 'hoppable'}`}
               >
                 <IconGrid className="h-4 w-4" />
               </button>
@@ -233,9 +268,7 @@ export default function CataloguePage() {
                 aria-label="List view"
                 aria-pressed={view === 'list'}
                 onClick={() => setView('list')}
-                className={`rounded-[8px] p-2 transition-colors ${
-                  view === 'list' ? 'bg-accent text-accent-foreground' : 'text-foreground/60 hover:text-foreground'
-                }`}
+                className={`rounded-[8px] p-2 ${view === 'list' ? 'bg-white text-black' : 'hoppable'}`}
               >
                 <IconList className="h-4 w-4" />
               </button>
@@ -291,7 +324,13 @@ export default function CataloguePage() {
           }
         >
           {filtered.map(p => (
-            <PurchaseCard key={p.id} purchase={p} view={view} />
+            <PurchaseCard
+              key={p.id}
+              purchase={p}
+              view={view}
+              defaultCurrency={settings?.default_currency ?? null}
+              displayDefaultCurrency={settings?.display_default_currency ?? false}
+            />
           ))}
         </div>
       )}

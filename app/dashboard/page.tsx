@@ -11,9 +11,12 @@ const HOME_DEFAULT = 'SGD'
 
 const CONDITION_LABEL: Record<Condition, string> = {
   new: 'New',
-  'like-new': 'Like new',
-  used: 'Used',
+  defective: 'Defective',
   refurbished: 'Refurbished',
+  A: 'Grade A',
+  B: 'Grade B',
+  C: 'Grade C',
+  D: 'Grade D',
 }
 
 const inputClass =
@@ -168,9 +171,6 @@ export default function DashboardPage() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
-          <p className="mt-1.5 text-[13px] text-foreground/60 max-[640px]:text-[14px]">
-            A summary of what you have bought.
-          </p>
         </div>
         <div className="flex items-center gap-2">
           <label htmlFor="home-currency" className="text-[13px] text-foreground/60 max-[640px]:text-[14px]">
